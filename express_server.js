@@ -17,7 +17,8 @@ function generateRandomString() {
 };
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { username: req.cookies["username"],
+  urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
@@ -67,4 +68,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   // return res.send("Hello delete");
 delete urlDatabase[shortURL];
 res.redirect(`/urls`);
+});
+
+app.post("/urls/:shortURL/edit", (req, res) => {
+  // console.log(req.params);
+  const longURL = req.body.longURL;
+  const shortURL = req.params.shortURL;
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls`);
+});
+
+app.post("/login", (req, res) => {
+  res.cookie('username', req.body.username)
+  res.redirect(`/urls`);
 });
