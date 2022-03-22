@@ -60,3 +60,11 @@ app.post("/urls", (req, res) => {
   // console.log(req.body);  // Log the POST request body to the console
   res.redirect(`/urls/${shortURL}`);         
 });
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  // console.log(req.params);
+  const { shortURL } = req.params;
+  // return res.send("Hello delete");
+delete urlDatabase[shortURL];
+res.redirect(`/urls`);
+});
