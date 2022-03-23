@@ -8,13 +8,13 @@
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <% if(username){ %>
-          Logged in as: <%=username%>
-          <form action="/logout" method="POST">
+        <% if(user){ %>
+          Logged in as: <%=user.email%>
+          <form action="/logout" method="POST"style="position: absolute; right: 0;">
             <button type="submit">Logout</button>
           </form>
         <% } else{ %>  
-          <form action="/login" method="POST">
+          <form action="/login" method="POST"style="position: absolute; right: 0;">
             <input type="text" name="username"/>
             <button type="submit">Login</button>
           </form>
@@ -23,3 +23,4 @@
     </div>
   </nav>
 </header>
+
