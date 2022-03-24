@@ -113,8 +113,35 @@ app.post("/urls/:shortURL/edit", (req, res) => {
   res.redirect(`/urls`);
 });
 
+// .get renders page and form render login.ejs
+app.get("/login", (req, res) => {
+  const templateVars = { user: null}
+  res.render("login", templateVars);
+});
+
+// for when form is submitted
 app.post("/login", (req, res) => {
-  res.cookie('user_id', id)
+  const { email, password } = req.body
+  // variable that acceses user object values
+  const _users = Object.values(users)
+  // variable that uses .find to check if client email is contained within object 'users'.
+  const foundEmail = _users.find(user => {
+    return user.email === email;
+  })
+
+  console.log("Found email & found password", foundEmail)
+    if (!foundEmail) {
+      return res.status(403).send("Invalid email")
+    }
+    if (email !== foundEmail["email"]) {
+      // console.log('email issue') TESTING
+    return res.status(403).send("Invalid email")
+    }
+    if (password !== foundEmail["password"]) {
+      // console.log('password issue') TESTING
+    return res.status(403).send("Invalid password")
+  }
+  res.cookie('user_id', foundEmail["id"]);
   res.redirect(`/urls`);
 });
 
