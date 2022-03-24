@@ -3,8 +3,8 @@ const app = express();                // Instantiate an express object for us to
 const PORT = 8080;                    // This is the default port   (stire the port value in a variable)
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-const bcrypt = require("bcrypt");
-const { use } = require("bcrypt/promises");
+const bcrypt = require("bcryptjs");
+
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -138,15 +138,14 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const userID = req.cookies.user_id
+  // perform check to see if it is their url
+  // only perform operation if user is logged in - stops people accessing API from behind the scenes without being logged in
   if (!userID) {
     res.send("Not authorized!")
   }
-  // perform check to see if it is their url
-  // only perform operation if user is logged in - stops people accessing API from behind the scenes without being logged in
   // const templateVars = { urls: urlDatabase, user: users[userID] }
   // console.log(req.params);
   const shortURL = req.params.shortURL;
-  // return res.send("Hello delete");
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
@@ -155,7 +154,6 @@ app.post("/urls/:shortURL", (req, res) => {
   const userID = req.cookies.user_id
   // const templateVars = { urls: urlDatabase, user: users[userID] }
   // const templateVars = { urls: urlDatabase, username: req.cookies['username'] }
-  // console.log(req.params);
   const longURL = req.body.longURL;
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL] = { longURL, userID };
@@ -175,9 +173,12 @@ app.post("/login", (req, res) => {
   const _users = Object.values(users)
   // variable that uses .find to check if client email is contained within object 'users'.
   const foundEmail = _users.find(user => {
-    return user.email === email;
+    if (user.email === email) {
+      return user.id;
+    }
+    return false;
   })
-
+  console.log(foundEmail)
   // console.log("Found email & found password", foundEmail)
   if (!foundEmail) {
     return res.status(403).send("Invalid email")
@@ -185,14 +186,11 @@ app.post("/login", (req, res) => {
   if (email !== foundEmail["email"]) {
     return res.status(403).send("Invalid email")
   }
-  if (password !== foundEmail["password"]) {
-    return res.status(403).send("Invalid password")
-  }
-  // bcrypt.compare(password, user.password, (err, success) => {
-  //   if (!success) {
-  //     return res.status(403).send("Invalid password");
-  //   }
-  // })
+  bcrypt.compare(password, foundEmail.password, (err, success) => {
+    if (!success) {
+      return res.status(403).send("Invalid password");
+    }
+  });
   // MAY HAVE TO MOVE NEXT TWO LINES INTO BCRYPT COMPARE FUNC ABOVE (AFTER IF STAT.)
   res.cookie('user_id', foundEmail["id"]);
   res.redirect(`/urls`);
@@ -227,12 +225,11 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email already registered.");
   }
 
-  bcrypt.genSalt(10, (err, salt) => {
-    bcrypt.hash(password, salt, (err, hash) => {
-      users[id] = { id, email, password: hash }     // adding new user details to the object
-    })
-  });
-  // users[id] = { id, email, password }  
+  let hashedPassword = bcrypt.hashSync(password, 10)
+  users[id] = { id, email, password: hashedPassword }
+  console.log(bcrypt.compareSync("password", hashedPassword));
+  
+  console.log("users", users)
 
   // Set encrypted cookie (delete res.cookie line 206). Use line below
   // req.session.(>cookie name here<) = user_id
@@ -251,7 +248,14 @@ app.post("/register", (req, res) => {
 // };
 
 
-
 // EXTRAS
 // May need this for bcrypt
 // const id = Math.floot(Math.random() * 1000) + 1;
+
+// Example
+// bcrypt.genSaltSync(10, (err, salt) => {
+  //   bcrypt.hash(password, salt, (err, hash) => {
+  //     users[id] = { id, email, password: hash }     // adding new user details to the object
+  //   })
+  // });
+  // bcrypt.compare("password", hash, function(err, res) {
