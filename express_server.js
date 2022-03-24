@@ -4,6 +4,7 @@ const PORT = 8080;                    // This is the default port   (stire the p
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
+const { use } = require("bcrypt/promises");
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -39,15 +40,15 @@ const users = {
   }
 };
 
-// const urlsForUser = (userID, urlDatabase) => {
-//   let filteredURLs = {};
-//   for (const key in urlDatabase) {
-//     if (urlDatabase[key].userID === userID) {
-//       filteredURLs[key] = urlDatabase[key];
-//     }
-//   }
-//   return filteredURLs;
-// } 
+const urlsForUser = (userID, urlDatabase) => {
+  let filteredURLs = {};
+  for (const key in urlDatabase) {
+    if (urlDatabase[key].userID === userID) {
+      filteredURLs[key] = urlDatabase[key];
+    }
+  }
+  return filteredURLs;
+ };
 
 // const findUser << helper function
 
@@ -57,11 +58,17 @@ function generateRandomString() {
 
 app.get("/urls", (req, res) => {
   const userID = req.cookies.user_id;
+  // Only registered and logged in users can view MyURLs
+  if (userID === undefined) {
+    return res.send("Please login to view")
+  }
+  const filteredURLs = urlsForUser(userID, urlDatabase)
+  
   // const shortURL = req.body.shortURL
   // console.log(req)
   // const longURL = req.body.longURL
   // console.log("Identifer", email);
-  const templateVars = { urls: urlDatabase, user: users[userID] }
+  const templateVars = { urls: filteredURLs, user: users[userID] }
   res.render("urls_index", templateVars);
 });
 
@@ -69,7 +76,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies.user_id
   if (!userID) {
-    res.render("login");
+    return res.render("login");
   }
   const templateVars = { urls: urlDatabase, user: users[userID] }
   res.render("urls_new", templateVars);
@@ -131,6 +138,11 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const userID = req.cookies.user_id
+  if (!userID) {
+    res.send("Not authorized!")
+  }
+  // perform check to see if it is their url
+  // only perform operation if user is logged in - stops people accessing API from behind the scenes without being logged in
   // const templateVars = { urls: urlDatabase, user: users[userID] }
   // console.log(req.params);
   const shortURL = req.params.shortURL;
