@@ -38,11 +38,24 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// Only registered and logged in users can create tiny URLs
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies.user_id
-  const templateVars = { urls: urlDatabase, user:users[userID] }
+  if (!userID) {
+    res.render("register");
+    const templateVars = { urls: urlDatabase, user:users[userID] }
+  }
   res.render("urls_new", templateVars);
 });
+
+
+
+// Working
+// app.get("/urls/new", (req, res) => {
+//   const userID = req.cookies.user_id
+//   const templateVars = { urls: urlDatabase, user:users[userID] }
+//   res.render("urls_new", templateVars);
+// });
 
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.cookies.user_id
