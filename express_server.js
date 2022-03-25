@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs");
 const req = require("express/lib/request");
 
-const { getUserByEmail } = require('../helpers.js');
+const { getUserByEmail, urlsForUser, generateRandomString } = require('./helpers.js');
 
 
 app.use(bodyParser.urlencoded({ extended: true }));
