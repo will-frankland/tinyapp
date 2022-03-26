@@ -49,7 +49,6 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  // check this function - failing MAJOR
   const userID = req.session.user_id
   if (!userID) {
     return res.redirect("/login");
@@ -58,15 +57,14 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// if user not logged in AND if a user is logged in but does not own a url with given id
-// .. should return error msg.
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id
   if (!userID) {
     return res.status(404).send("No access, please login")
   }
+  // if logged in but accessing URL of other user, display error message.
   const shortURL = req.params.shortURL
-  if (urlDatabase(shortURL).userID !== userID) {
+  if (urlDatabase[shortURL].userID !== userID) {
     return res.status(404).send("You do not own this URL")
   }
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[userID] };
@@ -86,6 +84,12 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/", (req, res) => {
   const userID = req.session.user_id
+  if (userID) {
+    return res.redirect("/urls");
+  }
+  if(!userID) {
+    return res.redirect("/login");
+  }
   const templateVars = { urls: urlDatabase, user: users[userID] }
   res.send("Hello!");
 });
@@ -116,9 +120,11 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  // perform check to see if user is logged in
   const userID = req.session.user_id
+    // if user is not logged in, return error message and exit function
   if (!userID) {
-    res.send("Not authorized!")
+    return res.send("Not authorized!")
   }
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
@@ -156,8 +162,8 @@ app.post("/login", (req, res) => {
   req.session.user_id = user["id"];
   res.redirect(`/urls`);
 });
-// cookies not clearing after logout, check this
 app.post("/logout", (req, res) => {
+  // clear cookies after logout
   req.session = null
   res.redirect(`/urls`);
 });
